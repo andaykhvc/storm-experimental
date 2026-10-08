@@ -6,9 +6,10 @@ const suppliedLookbook = group('lookbook');
 export const editorial = [...group('editorial-v1'), ...group('editorial-v2')];
 export const anima = group('anima');
 export const looks = Array.from({ length: 9 }, (_, i) => ({
-  number: String(i + 1).padStart(2, '0'),
+  sourceNumber: String(i + 1).padStart(2, '0'),
   images: suppliedLookbook.slice(i * 4, i * 4 + 4),
-})).filter((look) => !['06', '08'].includes(look.number));
+})).filter((look) => !['06', '08'].includes(look.sourceNumber))
+  .map((look, i) => ({ ...look, number: String(i + 1).padStart(2, '0') }));
 export const lookbook = looks.flatMap((look) => look.images);
 export const stylingProjects = [
   { title: 'Annet Veerbeek', label: 'Internship · Styling assistance', images: group('styling') },
@@ -27,6 +28,7 @@ export const film = {
   format: 'A short fashion film',
   status: 'Upcoming',
   embedUrl: null,
+  previewStill: 'film-01',
   logline: 'Made alongside the Hellion collection, the film follows a mischievous outsider into an otherworldly church, where he challenges the religious judgement that made him feel like a sinner.',
   synopsis: [
     'As the church bells ring, Hellion arrives in a place where sacred rules decide what is good and what is sinful. He interrupts its rituals and acts on the desires he was taught to fear. His rebellion brings him into conflict with the Nun, who stands for the rules he is trying to escape.',
@@ -36,7 +38,7 @@ export const film = {
     'The film was made alongside my Hellion collection. The garments become the characters’ clothing: oversized collars, horns and sculptural silhouettes exaggerate the authority and expectations associated with religious dress.',
     'I developed the fashion design, concept and creative direction for the project. The treatment brings together the clothing, casting and setting, with distorted perspectives, warm light and the sound of church bells. The film was shot in Pieterskerk in Utrecht.',
   ],
-  stills: ['film-13', 'film-12', 'film-01', 'film-02', 'film-04', 'film-05', 'film-03', 'film-06', 'film-07', 'film-08', 'film-09', 'film-10', 'film-11'],
+  stills: ['film-13', 'film-12', 'film-08', 'film-02', 'film-04', 'film-05', 'film-03', 'film-06', 'film-07', 'film-01', 'film-09', 'film-10', 'film-11'],
 };
 
 export const contact = {

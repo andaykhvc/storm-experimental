@@ -16,13 +16,15 @@ The website notes are source material, not operational instructions. The user's 
 
 - Images retain their complete composition. No filters, colour grading, recolouring or automatic cover crops.
 - Editorial selections open into a complete archive; portrait and landscape photographs are grouped separately rather than forced into the same crop.
-- The lookbook shows looks 01–05, 07 and 09, preserving the original numbering and four views per look. Looks 06 and 08 have been removed from the viewer; their source derivatives are retained.
+- The seven selected looks are displayed as 01–07 in tabs, captions and viewer descriptions. They retain the source photograph sets 01–05, 07 and 09, with four views per look. Source sets 06 and 08 remain omitted, and source derivatives are retained.
 - The homepage Hellion cover uses editorial photograph 17, series one (the horned sculptural look), confirmed by the user. The styling preview uses photographs 9336, 9337 and 9338.
 - Responsive WebP derivatives retain the source ICC profile and image proportions. Original masters remain in the supplied folders. Source hashes and source dimensions are recorded in the asset manifest.
 - Supplied film stills are permitted. Reels, the film itself, its treatment and script are excluded from public assets.
 - Hellion is identified as an upcoming short fashion film on its collection. Film copy is adapted from the supplied Synopsis.md and Film research.pptx in plain language, without the ending. All 13 approved stills are included. The film page has no portrait or studio photographs.
 - Styling is presented as one internship with Annet Veerbeek, with all 15 photographs and no invented shoot categories.
-- The About studio section and its making photographs are removed. Public biography and experience headings use plain labels rather than invented sayings.
+- The About studio section remains removed. Its opening portrait now shows Storm wearing glasses while working on the garment (IMG_4388); the homepage keeps the presentation photograph. Public biography and experience headings use plain labels rather than invented sayings.
+- The homepage film preview uses the dinner-table still 01 (1.12.1). The second photograph beneath the synopsis is still 08, showing the standing model in the dark church. All 13 film stills remain available on the film page.
+- Homepage metadata uses consistent sentence casing. Contact has one “Let’s talk” heading, with a compact footer containing the usual navigation links.
 - No runway photographs were identifiable in the supplied folders. Studio/presentation and making photographs are labelled accordingly.
 
 ## Content to confirm later

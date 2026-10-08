@@ -21,7 +21,7 @@ Deploy the generated `dist/` directory to a static host at the domain root. Each
 
 Edit `src/content.js` for project groupings, film status, contact details and page metadata. Edit `src/templates.js` for page copy and composition. `public/assets/manifest.json` records the source filename, hash, dimensions and responsive derivatives for each of the 149 supplied photographs.
 
-- The Hellion lookbook shows looks 01–05, 07 and 09, with all four views of each. Looks 06 and 08 are omitted from the gallery as requested; source derivatives are retained.
+- The Hellion lookbook shows seven looks, numbered 01–07, with all four views of each. The original source sets 06 and 08 remain omitted; source derivatives and original IDs are retained.
 - All 45 Hellion editorial, 28 Anima Obscura and 15 styling photographs are available in their project galleries.
 - Photographs have no filters or forced cover crops. Portrait and landscape archives are grouped separately.
 - The supplied Koch=Schrift webfont is used for Storm and Hellion. Helvetica Neue/Arial is the sans-serif fallback until an RB Campton Neue webfont is supplied.
