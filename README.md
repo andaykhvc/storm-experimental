@@ -2,6 +2,8 @@
 
 A black editorial portfolio for Storm Nijhuis: fashion design, styling, creative direction, About and Contact. Built with vanilla JavaScript and Vite, with all pages pre-rendered to static HTML.
 
+![Desktop homepage preview](docs/preview-desktop.png)
+
 ## Run
 
 Use Node.js 22.12+ or 24 and pnpm.
