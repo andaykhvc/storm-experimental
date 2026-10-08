@@ -21,11 +21,12 @@ Deploy the generated `dist/` directory to a static host at the domain root. Each
 
 Edit `src/content.js` for project groupings, film status, contact details and page metadata. Edit `src/templates.js` for page copy and composition. `public/assets/manifest.json` records the source filename, hash, dimensions and responsive derivatives for each of the 149 supplied photographs.
 
-- All 36 Hellion lookbook photographs are included in ordered groups of four.
+- The Hellion lookbook shows looks 01–05, 07 and 09, with all four views of each. Looks 06 and 08 are omitted from the gallery as requested; source derivatives are retained.
 - All 45 Hellion editorial, 28 Anima Obscura and 15 styling photographs are available in their project galleries.
 - Photographs have no filters or forced cover crops. Portrait and landscape archives are grouped separately.
 - The supplied Koch=Schrift webfont is used for Storm and Hellion. Helvetica Neue/Arial is the sans-serif fallback until an RB Campton Neue webfont is supplied.
 - The CV is public. Film reels, treatment, research, original TIFFs and private source documents are excluded.
+- Styling is one Annet Veerbeek internship gallery. The film page identifies Hellion as an upcoming short fashion film and includes a synopsis, collection context and all 13 supplied stills.
 
 ## Releasing the film
 

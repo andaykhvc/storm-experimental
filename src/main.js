@@ -33,7 +33,6 @@ function bindPage() {
   const listen = (target, event, handler, options = {}) => target.addEventListener(event, handler, { ...options, signal });
   const motion = () => !reducedMotion.matches;
   let revealObserver;
-  let frameId;
   let headerFrame;
   let activeLook = 0;
   let viewerIds = [];
@@ -291,33 +290,11 @@ function bindPage() {
   listen(viewerImage, 'pointerup', endDrag);
   listen(viewerImage, 'pointercancel', endDrag);
 
-  const story = app.querySelector('.look-story');
-  if (story && reducedMotion.matches) story.querySelectorAll('[data-story-frame]').forEach((element) => element.setAttribute('aria-hidden', 'false'));
-  const storyProgress = story?.querySelector('[data-story-progress]');
-  function updateStory() {
-    if (!story || reducedMotion.matches) return;
-    const bounds = story.getBoundingClientRect();
-    const progress = Math.max(0, Math.min(0.999, -bounds.top / (bounds.height - innerHeight)));
-    const index = Math.min(2, Math.floor(progress * 3));
-    story.querySelectorAll('[data-story-frame]').forEach((element, i) => {
-      element.classList.toggle('is-active', i === index);
-      element.setAttribute('aria-hidden', String(i !== index));
-    });
-    story.querySelector('[data-story-counter]').textContent = String(index + 1).padStart(2, '0');
-    storyProgress.style.transform = `scaleX(${progress})`;
-  }
-  if (story) {
-    const schedule = () => { cancelAnimationFrame(frameId); frameId = requestAnimationFrame(updateStory); };
-    listen(window, 'scroll', schedule, { passive: true });
-    listen(window, 'resize', schedule, { passive: true });
-    updateStory();
-  }
   dispose = () => {
     if (dialog.open) dialog.close();
     document.body.classList.remove('viewer-open');
     controller.abort();
     revealObserver?.disconnect();
-    cancelAnimationFrame(frameId);
     cancelAnimationFrame(headerFrame);
   };
 }

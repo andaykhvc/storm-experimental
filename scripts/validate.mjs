@@ -1,17 +1,32 @@
 import assert from 'node:assert/strict';
 import { readFile, access, readdir } from 'node:fs/promises';
-import { assets, looks, lookbook, editorial, anima, stylingProjects, film, routes } from '../src/content.js';
+import { assets, group, looks, lookbook, editorial, anima, stylingProjects, film, routes } from '../src/content.js';
 import { renderPage, pageMeta } from '../src/templates.js';
 
-assert.equal(lookbook.length, 36, 'Include all 36 supplied lookbook photographs.');
-assert.equal(looks.length, 9);
+assert.equal(lookbook.length, 28, 'Keep four views of each of the seven selected looks.');
+assert.deepEqual(looks.map((look) => look.number), ['01', '02', '03', '04', '05', '07', '09'], 'Remove looks 6 and 8 without renumbering the others.');
 assert(looks.every((look) => look.images.length === 4), 'Every supplied look has four views.');
 assert.deepEqual(looks.flatMap((look) => look.images), lookbook);
 assert.equal(editorial.length, 45);
 assert.equal(anima.length, 28);
 assert.equal(stylingProjects.flatMap((project) => project.images).length, 15);
 assert.equal(new Set(stylingProjects.flatMap((project) => project.images)).size, 15);
+assert.equal(stylingProjects.length, 1, 'Present the Annet Veerbeek internship as one gallery.');
+assert.equal(film.stills.length, 13);
+assert.deepEqual([...film.stills].sort(), group('film').sort(), 'Include every supplied film still once.');
 assert.equal(film.embedUrl, null, 'Keep unreleased film playback disabled.');
+
+const home = renderPage('/');
+assert(!/<img/.test(home.match(/<section class="home-hero"[\s\S]*?<\/section>/)[0]), 'Go straight from the masthead into the biography.');
+assert(!home.match(/<header[\s\S]*?<\/header>/)[0].includes('Storm Nijhuis'), 'Keep the large homepage name without a second header wordmark.');
+assert(home.includes('/assets/editorial-v1-17-large.webp'), 'Use the chosen horned editorial photograph 17.');
+for (const id of ['9336', '9337', '9338']) assert(home.includes(`/assets/styling-${id}-large.webp`));
+assert(!home.includes('/assets/styling-9403'), 'Use the selected internship photographs in the homepage preview.');
+const filmPage = renderPage('/creative-direction/');
+assert(filmPage.includes('A short fashion film') && filmPage.includes('Upcoming'), 'Identify the film and its release status immediately.');
+assert(!/\/assets\/(about|presentation)-/.test(filmPage), 'The film page uses only film stills.');
+const about = renderPage('/about/');
+assert(!about.includes('studio-section') && !/\/assets\/about-0[2-6]/.test(about), 'Remove the studio section and making photographs.');
 
 for (const asset of assets.values()) {
   for (const size of ['large', 'small']) {
@@ -29,6 +44,7 @@ for (const path of Object.keys(routes)) {
   assert(pageMeta(path).description.length > 40);
   assert(!/graduation collection/i.test(html), 'Use the Hellion collection title.');
   assert(!/<video|<iframe/i.test(html), 'No prerelease movie or reels.');
+  assert(!/In the details|Another perspective|Always making|to understand them|Colour studies|A collection brought|The work starts here/.test(html), 'Remove the rejected headings and styling categories.');
   for (const match of html.matchAll(/data-viewer="([^"]+)"/g)) assert(assets.has(match[1]));
   for (const match of html.matchAll(/href="(\/[^"#]*)/g)) links.add(match[1]);
 }
@@ -40,4 +56,4 @@ for (const file of await readdir('public/assets')) assert(!/\.(mp4|mov|pptx|tif)
 const css = await readFile('src/styles.css', 'utf8');
 assert(!/filter\s*:|object-fit\s*:\s*cover/i.test(css), 'Preserve photo colours and full frames.');
 assert(css.includes('prefers-reduced-motion'));
-console.log(`Content checks passed: ${Object.keys(routes).length} routes, ${assets.size} images, complete lookbook and archives, valid links, no unreleased footage.`);
+console.log(`Content checks passed: ${Object.keys(routes).length} routes, ${assets.size} images, selected lookbook and complete archives, valid links, no unreleased footage.`);
