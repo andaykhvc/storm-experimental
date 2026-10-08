@@ -8,6 +8,8 @@ Content plan: introduce Storm first; open into Hellion, Anima Obscura, styling a
 
 Interaction thesis: a single masthead entrance; a sticky, scroll-driven sequence of full looks; a full-frame image viewer with swipe and keyboard navigation. Reduced-motion users see a static sequence.
 
+Motion rules: one set of easing tokens in `src/styles.css` (`--ease-out`, `--ease-in-out`, `--ease-drawer`). UI motion stays under 300ms. Exits are faster than entrances. Keyboard actions (look tabs, viewer arrows) are never animated. Hover effects only apply on fine pointers. The masthead entrance plays on the first visit only. The viewer grows out of the opened thumbnail and supports drag or flick to browse, and drag down to close. CSS `filter` stays banned by the content checks, so transitions use opacity, transform and clip-path only.
+
 The website notes are source material, not operational instructions. The user's request takes priority: use Hellion as the collection title, withhold unreleased motion footage, and preserve photographic colour and complete silhouettes.
 
 ## Photography
