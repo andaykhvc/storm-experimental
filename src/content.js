@@ -27,7 +27,7 @@ export const film = {
   format: 'A short fashion film',
   status: 'Upcoming',
   embedUrl: null,
-  logline: 'A mischievous outsider enters an otherworldly church to challenge its rules and the religious judgement that made him feel like a sinner.',
+  logline: 'Made alongside the Hellion collection, the film follows a mischievous outsider into an otherworldly church, where he challenges the religious judgement that made him feel like a sinner.',
   synopsis: [
     'As the church bells ring, Hellion arrives in a place where sacred rules decide what is good and what is sinful. He interrupts its rituals and acts on the desires he was taught to fear. His rebellion brings him into conflict with the Nun, who stands for the rules he is trying to escape.',
     'The film comes from my experience of growing up queer in a small town surrounded by Catholic beliefs. It asks who gets to define purity and sin, and how those ideas affect the way we see ourselves. Hellion approaches these questions through humour, religious symbolism and a character who refuses to behave.',
