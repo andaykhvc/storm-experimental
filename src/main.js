@@ -348,5 +348,7 @@ function navigate(href, { historyMode = 'push', focus = true } = {}) {
 if (app.querySelector('main')?.dataset.route !== normalizePath(location.pathname)) app.innerHTML = renderPage(location.pathname);
 setMetadata(location.pathname);
 bindPage();
+// iOS Safari only applies :active press states once a touch listener exists on the page.
+document.addEventListener('touchstart', () => {}, { passive: true });
 window.addEventListener('popstate', () => navigate(location.href, { historyMode: 'none' }));
 if (location.hash) requestAnimationFrame(() => document.getElementById(decodeURIComponent(location.hash.slice(1)))?.scrollIntoView({ behavior: 'instant' }));
