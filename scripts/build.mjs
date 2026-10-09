@@ -18,4 +18,4 @@ for (const path of [...Object.keys(routes), '/404/']) {
   await writeFile(`${directory}index.html`, html);
   if (path === '/404/') await writeFile('dist/404.html', html);
 }
-console.log('Pre-rendered all 8 portfolio pages and the 404 page.');
+console.log(`Pre-rendered all ${Object.keys(routes).length} website pages and the 404 page.`);
