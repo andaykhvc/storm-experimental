@@ -73,6 +73,7 @@ function bindPage() {
 
   function setMenu(open, { focus = false } = {}) {
     menuButton.setAttribute('aria-expanded', String(open));
+    menuButton.textContent = open ? 'Close' : 'Menu';
     nav.classList.toggle('is-open', open);
     if (open) header.classList.remove('is-hidden');
     if (focus) menuButton.focus();
