@@ -32,10 +32,11 @@ export function description(id) {
   return id === 'about-01' ? 'Portrait of Storm Nijhuis.' : 'Storm Nijhuis working on the sculptural garments for Hellion in the studio.';
 }
 
-export function picture(id, { eager = false, sizes = '(max-width: 700px) 100vw, 50vw', className = '' } = {}) {
+// eager: load now because it is on the first screen. priority: also fetch it first (the main image only).
+export function picture(id, { eager = false, priority = eager, sizes = '(max-width: 700px) 100vw, 50vw', className = '' } = {}) {
   const asset = assets.get(id);
   if (!asset) throw new Error(`Missing asset: ${id}`);
-  return `<img class="${className}" src="${asset.large.src}" srcset="${asset.small.src} ${asset.small.width}w, ${asset.large.src} ${asset.large.width}w" sizes="${sizes}" width="${asset.width}" height="${asset.height}" alt="${escape(description(id))}" loading="${eager ? 'eager' : 'lazy'}" ${eager ? 'fetchpriority="high"' : ''} decoding="async" />`;
+  return `<img class="${className}" src="${asset.large.src}" srcset="${asset.small.src} ${asset.small.width}w, ${asset.medium.src} ${asset.medium.width}w, ${asset.large.src} ${asset.large.width}w" sizes="${sizes}" width="${asset.width}" height="${asset.height}" alt="${escape(description(id))}" loading="${eager ? 'eager' : 'lazy'}" ${priority ? 'fetchpriority="high"' : ''} decoding="async" />`;
 }
 
 function photo(id, options = {}) {
@@ -58,8 +59,8 @@ function pageHeading({ eyebrow = '', title, intro = '', gothic = false, classNam
   return `<div class="page-heading ${className}">${eyebrow ? `<p class="eyebrow">${eyebrow}</p>` : ''}<div class="page-heading-body"><h1 class="${gothic ? 'gothic' : ''}">${heading}</h1>${intro ? `<p class="page-intro">${intro}</p>` : ''}</div></div>`;
 }
 
-function projectLink({ href, image, title, label, extra = '' }) {
-  return `<a class="project-link" href="${href}"><div class="project-image">${picture(image)}</div><div class="project-caption"><div><h3 class="${title === 'Hellion' ? 'gothic' : ''}">${title}</h3><p>${label}</p></div>${extra ? `<span class="project-extra">${extra}</span>` : ''}</div></a>`;
+function projectLink({ href, image, title, label, extra = '', eager = false, priority = eager }) {
+  return `<a class="project-link" href="${href}"><div class="project-image">${picture(image, { eager, priority })}</div><div class="project-caption"><div><h3 class="${title === 'Hellion' ? 'gothic' : ''}">${title}</h3><p>${label}</p></div>${extra ? `<span class="project-extra">${extra}</span>` : ''}</div></a>`;
 }
 
 function home() {
@@ -71,23 +72,26 @@ function home() {
 }
 
 function design() {
-  return `${pageHeading({ title: 'Design', intro: 'Clothing as a way to explore identity. Material as a starting point.' })}<section class="design-projects section-pad"><div class="project-pair reveal">${projectLink({ href: '/design/hellion/', image: 'editorial-v2-29', title: 'Hellion', label: 'Collection · Lookbook · Editorial', extra: '2026' })}${projectLink({ href: '/design/anima-obscura/', image: 'anima-08', title: 'Anima Obscura', label: 'Fashion editorial · With Denise Bakker' })}</div></section>`;
+  return `${pageHeading({ title: 'Design', intro: 'Clothing as a way to explore identity. Material as a starting point.' })}<section class="design-projects section-pad"><div class="project-pair reveal">${projectLink({ href: '/design/hellion/', image: 'editorial-v2-29', title: 'Hellion', label: 'Collection · Lookbook · Editorial', extra: '2026', eager: true })}${projectLink({ href: '/design/anima-obscura/', image: 'anima-08', title: 'Anima Obscura', label: 'Fashion editorial · With Denise Bakker', eager: true, priority: false })}</div></section>`;
 }
 
 export function renderLook(index = 0) {
   const look = looks[index];
-  return `<div class="look-angle-grid" data-gallery="${look.images.join(',')}">${look.images.map((id, i) => `<figure>${photo(id, { sizes: '(max-width: 700px) 72vw, 24vw', eager: i === 0 })}<figcaption><span>Look ${look.number}</span><span>${['Front', 'Side', 'Back', 'Alternate view'][i]}</span></figcaption></figure>`).join('')}</div>`;
+  return `<div class="look-angle-grid" data-gallery="${look.images.join(',')}">${look.images.map((id, i) => `<figure>${photo(id, { sizes: '(max-width: 700px) 72vw, 24vw' })}<figcaption><span>Look ${look.number}</span><span>${['Front', 'Side', 'Back', 'Alternate view'][i]}</span></figcaption></figure>`).join('')}</div>`;
 }
 
-function gallery(ids, className = '', { eager = false } = {}) {
-  return `<div class="photo-gallery ${className}" data-gallery="${ids.join(',')}">${ids.map((id, i) => `<figure class="reveal">${photo(id, { eager: eager && i < 2 })}</figure>`).join('')}</div>`;
+// Three-column grids on desktop, two on phones.
+const thirds = '(max-width: 700px) 50vw, 30vw';
+
+function gallery(ids, className = '', { eager = false, sizes } = {}) {
+  return `<div class="photo-gallery ${className}" data-gallery="${ids.join(',')}">${ids.map((id, i) => `<figure class="reveal">${photo(id, { eager: eager && i < 2, priority: eager && i === 0, ...(sizes && { sizes }) })}</figure>`).join('')}</div>`;
 }
 
 function archive(ids, heading, featuredIds = []) {
   const remaining = ids.filter((id) => !featuredIds.includes(id));
   const portraits = remaining.filter((id) => assets.get(id).width <= assets.get(id).height);
   const landscapes = remaining.filter((id) => assets.get(id).width > assets.get(id).height);
-  return `<details class="archive-details"><summary><span>${heading}</span><span class="archive-count">${ids.length} ${ids.length === 1 ? 'photograph' : 'photographs'}</span><span class="archive-toggle" aria-hidden="true"></span></summary><div class="archive-body">${portraits.length ? gallery(portraits, 'archive-grid') : ''}${landscapes.length ? gallery(landscapes, 'landscape-grid') : ''}</div></details>`;
+  return `<details class="archive-details"><summary><span>${heading}</span><span class="archive-count">${ids.length} ${ids.length === 1 ? 'photograph' : 'photographs'}</span><span class="archive-toggle" aria-hidden="true"></span></summary><div class="archive-body">${portraits.length ? gallery(portraits, 'archive-grid', { sizes: thirds }) : ''}${landscapes.length ? gallery(landscapes, 'landscape-grid') : ''}</div></details>`;
 }
 
 function hellion() {
@@ -95,7 +99,7 @@ function hellion() {
   return `${pageHeading({ title: 'Hellion', gothic: true, intro: 'A 2026 collection by Storm Nijhuis, presented at Lichting.' })}<section class="project-opening section-pad"><div class="project-opening-photo">${photo('editorial-v2-29', { eager: true })}</div><div class="project-opening-copy"><h2>They called me a sinner,<br />so I became their hellion.</h2><p>Hellion is a fashion protest and a persona. Growing up queer in a small town, I learned what it meant to be seen as different. This collection turns that judgment into a way to claim space.</p><p>Historical silhouettes, sculptural materials and religious symbolism question the line between purity and sin, softness and aggression.</p><div class="project-facts"><span>Fashion & material design</span><span>Storm Nijhuis</span><span>Presented at Lichting</span><span>2026</span></div></div></section>
     <section id="lookbook" class="lookbook section-pad"><div class="section-heading"><h2>Lookbook</h2></div><div class="lookbook-navigation"><div class="look-tabs" role="tablist" aria-label="Choose a look">${looks.map((look, i) => `<button type="button" role="tab" id="look-tab-${i}" aria-controls="look-panel" aria-selected="${i === 0}" tabindex="${i === 0 ? '0' : '-1'}" data-look="${i}">Look ${look.number}</button>`).join('')}<span class="look-indicator" aria-hidden="true"></span></div><div class="look-arrows"><button type="button" data-look-step="-1" >Previous</button><button type="button" data-look-step="1">Next</button></div></div><div id="look-panel" role="tabpanel" aria-labelledby="look-tab-0">${renderLook()}</div></section>
     <section class="editorial-section section-pad"><div class="section-heading"><h2>Editorial</h2></div>${gallery(featured)}${archive(editorial, 'Explore the complete editorial', featured)}</section>
-    <section class="presentation-section section-pad reveal"><div class="section-heading"><h2>Behind the collection</h2></div><div class="presentation-layout"><div data-gallery="presentation-8536,presentation-8537">${photo('presentation-8536')}</div><div class="presentation-copy"><p>From the studio to the presentation. A look at the garments, the research and the person behind them.</p><a class="text-link" href="/about/">Meet Storm</a><div data-gallery="presentation-8535,presentation-8540,presentation-8538,presentation-8539,presentation-8537">${photo('presentation-8535')}</div></div></div><div class="presentation-wide" data-gallery="presentation-8539">${photo('presentation-8539', { sizes: '100vw' })}</div>${archive(['presentation-8536', 'presentation-8537', 'presentation-8535', 'presentation-8540', 'presentation-8538', 'presentation-8539'], 'More from the presentation', ['presentation-8536', 'presentation-8535', 'presentation-8539'])}</section><div class="next-project section-pad"><span class="eyebrow">Next project</span><a href="/design/anima-obscura/">Anima Obscura</a></div>`;
+    <section class="presentation-section section-pad reveal"><div class="section-heading"><h2>Behind the collection</h2></div><div class="presentation-layout"><div data-gallery="presentation-8536,presentation-8537">${photo('presentation-8536')}</div><div class="presentation-copy"><p>From the studio to the presentation. A look at the garments, the research and the person behind them.</p><a class="text-link" href="/about/">Meet Storm</a><div data-gallery="presentation-8535,presentation-8540,presentation-8538,presentation-8539,presentation-8537">${photo('presentation-8535', { sizes: '(max-width: 700px) 60vw, 25vw' })}</div></div></div><div class="presentation-wide" data-gallery="presentation-8539">${photo('presentation-8539', { sizes: '100vw' })}</div>${archive(['presentation-8536', 'presentation-8537', 'presentation-8535', 'presentation-8540', 'presentation-8538', 'presentation-8539'], 'More from the presentation', ['presentation-8536', 'presentation-8535', 'presentation-8539'])}</section><div class="next-project section-pad"><span class="eyebrow">Next project</span><a href="/design/anima-obscura/">Anima Obscura</a></div>`;
 }
 
 function animaPage() {
@@ -105,7 +109,7 @@ function animaPage() {
 
 function styling() {
   const internship = stylingProjects[0];
-  return `${pageHeading({ title: 'Styling', intro: 'Styling assistance during my internship with Annet Veerbeek.' })}<section class="styling-project section-pad"><div class="section-heading reveal"><h2>${internship.title}</h2><span class="muted">${internship.label}</span></div>${gallery(internship.images, 'styling-gallery', { eager: true })}</section>`;
+  return `${pageHeading({ title: 'Styling', intro: 'Styling assistance during my internship with Annet Veerbeek.' })}<section class="styling-project section-pad"><div class="section-heading reveal"><h2>${internship.title}</h2><span class="muted">${internship.label}</span></div>${gallery(internship.images, 'styling-gallery', { eager: true, sizes: thirds })}</section>`;
 }
 
 function creativeDirection() {

@@ -37,7 +37,7 @@ assert.equal((contactPage.match(/Let’s talk/g) || []).length, 1, 'Show one inv
 assert(!contactPage.includes('footer-invitation'), 'Remove the repeat Contact footer invitation.');
 
 for (const asset of assets.values()) {
-  for (const size of ['large', 'small']) {
+  for (const size of ['large', 'medium', 'small']) {
     await access(`public${asset[size].src}`);
     const ratio = asset.width / asset.height;
     assert(Math.abs(asset[size].width / asset[size].height - ratio) < 0.007, `Changed aspect ratio: ${asset.id}`);
