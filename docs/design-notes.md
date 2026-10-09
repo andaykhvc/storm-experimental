@@ -8,7 +8,9 @@ Content plan: the homepage name leads straight into a fuller personal introducti
 
 Interaction thesis: a single masthead entrance, restrained page reveals and a full-frame image viewer with swipe and keyboard navigation. The scroll-driven collection sequence has been removed following feedback.
 
-Motion rules: one set of easing tokens in `src/styles.css` (`--ease-out`, `--ease-in-out`, `--ease-drawer`). UI motion stays under 300ms. Exits are faster than entrances. Keyboard actions (look tabs, viewer arrows) are never animated. Hover effects only apply on fine pointers. The masthead entrance plays on the first visit only. The viewer grows out of the opened thumbnail and supports drag or flick to browse, and drag down to close. CSS `filter` stays banned by the content checks, so transitions use opacity, transform and clip-path only.
+Motion rules: one set of easing tokens in `src/styles.css` (`--ease-out`, `--ease-in-out`, `--ease-drawer`). UI motion stays under 300ms. Exits are faster than entrances. Keyboard actions (look tabs, viewer arrows) are never animated. Hover effects only apply on fine pointers. The masthead entrance plays on the first visit only. The viewer grows out of the opened thumbnail and supports drag or flick to browse, and drag down to close. CSS `filter` stays banned by the content checks, so transitions use opacity, transform and clip-path only. Pre-rendered content already on screen at first load is never hidden and re-revealed. Reduced motion removes movement but keeps short opacity fades.
+
+Interface text: no arrow glyphs, icon characters, numbered labels or decorative kicker lines. Controls use plain words (Menu/Close, Previous/Next, Show/Hide).
 
 The website notes are source material, not operational instructions. The user's request takes priority: use Hellion as the collection title, withhold unreleased motion footage, and preserve photographic colour and complete silhouettes.
 
