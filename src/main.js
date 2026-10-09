@@ -7,6 +7,7 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const easeOut = 'cubic-bezier(0.23, 1, 0.32, 1)';
 const easeDrawer = 'cubic-bezier(0.32, 0.72, 0, 1)';
 let dispose = () => {};
+let firstBind = true;
 
 function setMetadata(path) {
   const meta = pageMeta(path);
@@ -57,11 +58,17 @@ function bindPage() {
         revealObserver.unobserve(entry.target);
       }
     }, { rootMargin: '0px 0px -6% 0px' });
-    app.querySelectorAll('.reveal').forEach((element) => revealObserver.observe(element));
-    app.querySelectorAll('main img').forEach(fadeInWhenLoaded);
+    // Pre-rendered content already on screen at first load stays put; only what is below the fold reveals.
+    const onScreen = (element) => firstBind && element.getBoundingClientRect().top < innerHeight;
+    app.querySelectorAll('.reveal').forEach((element) => {
+      if (onScreen(element)) element.classList.add('is-visible');
+      else revealObserver.observe(element);
+    });
+    app.querySelectorAll('main img').forEach((img) => { if (!onScreen(img)) fadeInWhenLoaded(img); });
   } else {
     document.documentElement.classList.remove('js-motion');
   }
+  firstBind = false;
 
   function fadeInWhenLoaded(img) {
     if (img.complete) return;
@@ -145,7 +152,7 @@ function bindPage() {
       full.src = asset.large.src;
       if (!full.complete) {
         viewerImage.src = placeholder;
-        full.decode().catch(() => {}).then(() => { if (viewerIds[viewerIndex] === id && dialog.open) viewerImage.src = asset.large.src; });
+        full.decode().catch(() => {}).then(() => { if (viewerIds[viewerIndex] === id && dialog.open) swapToFull(asset.large.src); });
       }
     }
     viewerImage.alt = description(id);
@@ -162,6 +169,20 @@ function bindPage() {
     }
   }
 
+  function swapToFull(src) {
+    // Skip the crossfade while the photograph is still moving; the layer would not follow it.
+    if (!motion() || drag || viewerImage.getAnimations().length) { viewerImage.src = src; return; }
+    const rect = viewerImage.getBoundingClientRect();
+    const layer = viewerImage.cloneNode();
+    layer.removeAttribute('data-viewer-image');
+    layer.className = 'viewer-swap';
+    layer.alt = '';
+    Object.assign(layer.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, transform: '' });
+    dialog.append(layer);
+    viewerImage.src = src;
+    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease' }).finished.then(() => layer.remove(), () => layer.remove());
+  }
+
   function openViewer(photo) {
     const id = photo.dataset.viewer;
     const scope = photo.closest('[data-gallery]');
@@ -169,6 +190,7 @@ function bindPage() {
     viewerIds = scope ? scope.dataset.gallery.split(',') : [id];
     viewerIndex = viewerIds.indexOf(id);
     viewerTrigger = photo;
+    viewerImage.style.transform = '';
     showViewerImage(thumbnail?.currentSrc);
     dialog.showModal();
     document.body.classList.add('viewer-open');
@@ -193,12 +215,11 @@ function bindPage() {
   function stepViewer(step, { animate = false } = {}) {
     viewerIndex = (viewerIndex + step + viewerIds.length) % viewerIds.length;
     showViewerImage();
-    if (animate && motion()) {
-      viewerImage.animate(
-        [{ opacity: 0, transform: `translateX(${step * 36}px)` }, { opacity: 1, transform: 'none' }],
-        { duration: 280, easing: easeOut },
-      );
-    }
+    if (!animate) return;
+    viewerImage.animate(
+      motion() ? [{ opacity: 0, transform: `translateX(${step * 36}px)` }, { opacity: 1, transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }],
+      { duration: motion() ? 280 : 160, easing: easeOut },
+    );
   }
 
   listen(app, 'click', (event) => {
@@ -249,7 +270,9 @@ function bindPage() {
     document.body.classList.remove('viewer-open');
     drag = null;
     viewerImage.classList.remove('is-dragging');
-    viewerImage.style.transform = '';
+    dialog.querySelectorAll('.viewer-swap').forEach((layer) => layer.remove());
+    // Let a dragged photograph finish leaving before it returns to the centre.
+    setTimeout(() => { if (!dialog.open) viewerImage.style.transform = ''; }, 200);
     if (viewerTrigger?.isConnected) viewerTrigger.focus({ preventScroll: true });
   });
   listen(dialog, 'click', (event) => { if (event.target === dialog) closeViewer(); });
@@ -285,7 +308,10 @@ function bindPage() {
       viewerImage.style.transform = '';
       return stepViewer(dx < 0 ? 1 : -1, { animate: true });
     }
-    if (axis === 'y' && dy > 0 && (dy > 120 || flick(dy))) return closeViewer();
+    if (axis === 'y' && dy > 0 && (dy > 120 || flick(dy))) {
+      viewerImage.style.transform = `translateY(${dy + 80}px) scale(0.88)`;
+      return closeViewer();
+    }
     viewerImage.style.transform = '';
   }
   listen(viewerImage, 'pointerup', endDrag);
@@ -314,7 +340,8 @@ function navigate(href, { historyMode = 'push', focus = true } = {}) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     if (url.hash) document.getElementById(decodeURIComponent(url.hash.slice(1)))?.scrollIntoView({ behavior: 'instant' });
   };
-  if (document.startViewTransition && !reducedMotion.matches) document.startViewTransition(update);
+  // A skipped transition (e.g. in a background tab) still runs the update; only its animation promise rejects.
+  if (document.startViewTransition && !reducedMotion.matches) document.startViewTransition(update).ready.catch(() => {});
   else update();
 }
 
