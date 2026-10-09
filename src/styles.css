@@ -144,10 +144,10 @@ summary::-webkit-details-marker{display:none}
 .styling-project{padding-top:10px;padding-bottom:100px}
 .styling-gallery{grid-template-columns:repeat(3,1fr);gap:24px}
 .styling-gallery>figure:nth-child(even){margin-top:0}
-.film-project{padding-bottom:120px}
-.film-project-description{display:grid;grid-template-columns:1fr 1fr;gap:8vw;padding:70px 0 110px}
-.film-project-description h2,.film-concept h2{font-size:clamp(1.5rem,2.6vw,2.5rem);line-height:1.15;letter-spacing:-.03em;font-weight:500}
-.film-project-description p,.film-concept p{color:var(--muted);font-size:1.0625rem;line-height:1.65;max-width:620px;margin-bottom:22px}
+.film-project{--film-space:clamp(64px,7vw,104px);padding-bottom:120px}
+.film-project-description{display:grid;grid-template-columns:1fr 1fr;gap:8vw;padding:var(--film-space) 0}
+.film-project-description h2,.film-concept h2,.film-stills-heading{font-size:clamp(1.5rem,2.6vw,2.5rem);line-height:1.15;letter-spacing:-.03em;font-weight:500}
+.film-project-description p,.film-concept p{text-wrap:pretty;color:var(--muted);font-size:1.0625rem;line-height:1.65;max-width:620px;margin-bottom:22px}
 .film-project-description p.muted{font-size:0.8125rem}
 .film-stills-pair{gap:4vw}
 .film-stills-pair>figure:nth-child(even){margin-top:0}
@@ -213,10 +213,13 @@ summary::-webkit-details-marker{display:none}
 .page-heading--film>.eyebrow{font-size:0.8125rem}
 .page-heading--film .page-intro{font-size:clamp(1.375rem,2.7vw,2.5rem);color:var(--white);letter-spacing:-.035em;line-height:1.2;max-width:330px}
 .film-summary{padding-bottom:38px}
-.film-logline{max-width:880px;font-size:clamp(1.375rem,2.4vw,2.125rem);line-height:1.45;letter-spacing:-.02em}
-.film-release-note{font-size:0.875rem;line-height:1.6;margin-top:20px;color:var(--muted)}
-.film-concept{display:grid;grid-template-columns:1fr 1fr;gap:8vw;padding:85px 0 100px}
-.film-stills-gallery{gap:35px;margin-top:35px}
+.film-logline{text-wrap:pretty;max-width:880px;font-size:clamp(1.375rem,2.4vw,2.125rem);line-height:1.45;letter-spacing:-.02em}
+.page-intro-group{flex:0 0 auto;max-width:360px;padding-bottom:.4em}
+.page-intro-group .page-intro{max-width:none;padding-bottom:0}
+.page-note{font-size:0.8125rem;letter-spacing:.015em;line-height:1.5;color:var(--muted);margin-top:14px;max-width:300px}
+.film-concept{display:grid;grid-template-columns:1fr 1fr;gap:8vw;padding:var(--film-space) 0}
+.film-stills-heading{margin-bottom:35px}
+.film-stills-gallery{gap:35px}
 .film-stills-gallery>figure:nth-child(even){margin-top:0}
 @media(min-width:1800px){.hero-heading h1{font-size:17.25rem}}
 @media(max-width:1000px){.site-header nav{gap:22px}.site-header nav a{font-size:0.6875rem;letter-spacing:.015em}.home-introduction{gap:5vw}.look-tabs button{padding:12px 8px}.lookbook-navigation{gap:10px}.experience-grid{grid-template-columns:1fr 1fr;gap:45px}.footer-bottom{flex-wrap:wrap;justify-content:flex-start;gap:18px 30px}.footer-bottom .top-button{margin-left:auto}.contact-details{grid-template-columns:1fr 1fr}}
@@ -315,12 +318,14 @@ summary::-webkit-details-marker{display:none}
   .page-heading--film .page-intro{font-size:1.5625rem;margin-top:25px}
   .film-summary{padding-bottom:28px}
   .film-logline{font-size:1.375rem;line-height:1.5}
-  .film-release-note{font-size:0.8125rem}
-  .film-concept{grid-template-columns:1fr;gap:24px;padding:55px 0 60px}
-  .film-stills-gallery{grid-template-columns:1fr;gap:25px;margin-top:25px}
+  .page-intro-group{max-width:none;padding:0;margin-top:22px}
+  .page-intro-group .page-intro{margin-top:0}
+  .film-concept{grid-template-columns:1fr;gap:24px;padding:56px 0}
+  .film-stills-heading{margin-bottom:25px}
+  .film-stills-gallery{grid-template-columns:1fr;gap:25px}
   .film-project{padding-bottom:70px}
-  .film-project-description{grid-template-columns:1fr;gap:24px;padding:40px 0 55px}
-  .film-project-description h2,.film-concept h2{font-size:1.5625rem}
+  .film-project-description{grid-template-columns:1fr;gap:24px;padding:56px 0}
+  .film-project-description h2,.film-concept h2,.film-stills-heading{font-size:1.5625rem}
   .film-project-description p,.film-concept p{font-size:1rem}
   .film-stills-pair{grid-template-columns:1fr;gap:25px}
   .film-stills-pair>figure:nth-child(even){margin-top:0}
