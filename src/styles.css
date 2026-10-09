@@ -179,16 +179,15 @@ summary::-webkit-details-marker{display:none}
 .image-viewer::backdrop{background:var(--black);opacity:0;transition:opacity 160ms ease,overlay 160ms allow-discrete,display 160ms allow-discrete}
 .image-viewer[open]::backdrop{opacity:1;transition-duration:240ms}
 @starting-style{.image-viewer[open]::backdrop{opacity:0}}
-.image-viewer.is-instant,.image-viewer.is-instant::backdrop,.image-viewer.is-instant .viewer-stage>img{transition:none}
+.image-viewer.is-instant,.image-viewer.is-instant::backdrop{transition:none}
+.image-viewer[open] .viewer-stage>img{will-change:transform}
 .viewer-toolbar{display:flex;justify-content:space-between;align-items:center;padding:var(--safe-t) max(var(--viewer-x),var(--safe-r)) 0 max(var(--viewer-x),var(--safe-l));gap:24px;font-size:0.75rem;letter-spacing:.015em;height:calc(var(--viewer-top) + var(--safe-t))}
 .viewer-toolbar>span{max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .viewer-toolbar button{padding:10px 0;font-size:0.75rem;letter-spacing:.015em;white-space:nowrap}
 .viewer-stage{--viewer-chrome:calc(var(--viewer-top) + var(--viewer-bottom) + var(--safe-t) + var(--safe-b));height:calc(100dvh - var(--viewer-chrome));display:grid;align-items:center;padding:0 max(var(--viewer-x),var(--safe-r)) 0 max(var(--viewer-x),var(--safe-l))}
-.viewer-stage>img{width:100%;height:100%;max-height:calc(100dvh - var(--viewer-chrome));object-fit:contain;-webkit-touch-callout:none;min-height:0;min-width:0;user-select:none;-webkit-user-drag:none;touch-action:pinch-zoom;cursor:grab;transition:transform 160ms var(--ease-out)}
+.viewer-stage>img{width:100%;height:100%;max-height:calc(100dvh - var(--viewer-chrome));object-fit:contain;-webkit-touch-callout:none;min-height:0;min-width:0;user-select:none;-webkit-user-drag:none;touch-action:pinch-zoom;cursor:grab}
 .viewer-stage>img:active{cursor:grabbing}
-.viewer-stage>img.is-dragging{transition:none}
 .viewer-swap{position:fixed;object-fit:contain;pointer-events:none;z-index:1}
-.image-viewer:not([open]) .viewer-stage>img{transform:scale(.98)}
 .viewer-bottom{height:calc(var(--viewer-bottom) + var(--safe-b));display:flex;justify-content:space-between;align-items:center;padding:0 max(var(--viewer-x),var(--safe-r)) var(--safe-b) max(var(--viewer-x),var(--safe-l));font-size:0.6875rem;letter-spacing:.015em;color:var(--muted)}
 .viewer-bottom>span:first-child{font-variant-numeric:tabular-nums;color:var(--white)}
 .viewer-steps{display:flex;gap:24px}
