@@ -57,4 +57,9 @@ export const routes = {
   '/creative-direction/': { title: 'Hellion, a short fashion film', description: 'Hellion, an upcoming short fashion film based on Storm Nijhuis’s collection. A rebellious outsider challenges religious judgement in an otherworldly church.' },
   '/about/': { title: 'About', description: 'Meet Storm Nijhuis. Fashion designer, stylist, creative director and Lichting finalist based in Amsterdam.' },
   '/contact/': { title: 'Contact', description: 'Contact Storm Nijhuis for fashion design, styling, creative direction and collaborations.' },
+  '/privacy/': { title: 'Privacy', description: 'How Storm Nijhuis handles enquiries and personal data, including website hosting, service providers and your privacy rights.' },
+  '/legal/': { title: 'Business details', description: 'Business identification and contact information for Storm Nijhuis, a fashion designer, stylist and creative director in Amsterdam.' },
+  '/cookies/': { title: 'Cookies', description: 'Information about cookies, browser storage and external services on the Storm Nijhuis portfolio website.' },
+  '/accessibility/': { title: 'Accessibility', description: 'Accessibility features, keyboard controls and how to request help using the Storm Nijhuis portfolio and CV.' },
+  '/terms/': { title: 'Enquiries & commissions', description: 'How to enquire about fashion design, styling and creative direction, and how commission details and consumer rights are agreed.' },
 };

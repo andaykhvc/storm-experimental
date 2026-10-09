@@ -6,7 +6,7 @@ A personal portfolio for Storm Nijhuis, an Amsterdam-based fashion designer, sty
 
 The visual language follows the work: a black editorial canvas, oversized Koch=Schrift typography and generous space for photography. Images retain their original colours and full compositions, from sculptural garment silhouettes to film stills.
 
-Built with **vanilla JavaScript, CSS and Vite**, with eight portfolio pages pre-rendered to static HTML.
+Built with **vanilla JavaScript, CSS and Vite**, with eight portfolio pages and five information pages pre-rendered to static HTML.
 
 ![Storm Nijhuis homepage with the Koch=Schrift masthead, biography and collection presentation photograph](docs/preview-desktop.png)
 
@@ -24,6 +24,11 @@ Built with **vanilla JavaScript, CSS and Vite**, with eight portfolio pages pre-
 | `/creative-direction/` | Hellion's film synopsis, collection context, release status and approved stills. |
 | `/about/` | Background, education, experience and a downloadable CV. |
 | `/contact/` | Direct email, telephone, Instagram and CV links. |
+| `/privacy/` | Enquiry and hosting data, providers, retention and privacy rights. |
+| `/legal/` | Business identification and contact information. |
+| `/cookies/` | Browser storage, hosting security and external services. |
+| `/accessibility/` | Accessibility features, keyboard controls, limitations and help. |
+| `/terms/` | Enquiries, commission agreements and consumer cancellation information. |
 
 The galleries include a full-screen photograph viewer with arrow-key navigation, swipe gestures and drag-down dismissal. The Hellion lookbook lets visitors move between seven looks, each with four views. Expandable archives keep complete photographic series accessible alongside the featured selections.
 
@@ -61,6 +66,7 @@ The project runs without environment variables or service credentials. Dependenc
 | --- | --- |
 | `pnpm dev` | Start Vite with live updates while editing. |
 | `pnpm check` | Validate content, image references, internal links and editorial rules. |
+| `pnpm check:publication` | Report missing business and privacy details before publishing final notices. |
 | `pnpm build` | Run validation, bundle the site and pre-render every page into `dist/`. |
 | `pnpm preview` | Serve the existing production build locally, normally on port `4173`. |
 
@@ -109,13 +115,14 @@ storm-new/
 | Project groups and lookbook selection | Group exports and `looks` in `src/content.js` |
 | Film synopsis, still order and release status | `film` in `src/content.js` |
 | Email, telephone and Instagram | `contact` in `src/content.js` |
+| Business identification, retention and privacy confirmations | `src/legal.js` and [legal publication notes](docs/legal-publication.md) |
 | Page titles and descriptions | `routes` in `src/content.js` |
 | Page copy, credits, featured images and composition | `src/templates.js` |
 | Image alt text and viewer descriptions | `imageDescriptions` and `description()` in `src/templates.js` |
 | Typography, spacing, colours and motion | `src/styles.css` |
 | Downloadable CV | `public/assets/storm-nijhuis-cv.pdf` |
 
-To add a page, register its metadata in `routes` in `src/content.js`, add its renderer to the `pages` map in `src/templates.js` and add navigation links where appropriate. The build picks up registered routes automatically. Update validation assertions and the build script's fixed page-count message when the page count changes.
+To add a page, register its metadata in `routes` in `src/content.js`, add its renderer to the `pages` map in `src/templates.js` and add navigation links where appropriate. The build picks up registered routes automatically. Update relevant validation assertions when the content changes.
 
 ### Photography and assets
 
@@ -139,7 +146,7 @@ Hellion is currently marked `Upcoming`, with `film.embedUrl` set to `null`. The 
 
 Once the premiere and public release are confirmed:
 
-1. Set `film.embedUrl` to the public YouTube **embed** URL and change `film.status` to `Released` in `src/content.js`.
+1. Confirm the privacy and consent requirements for the public YouTube **embed** URL before setting `film.embedUrl` and changing `film.status` to `Released` in `src/content.js`.
 2. Review the synopsis, release copy and route description in `src/content.js`, plus the film image descriptions in `src/templates.js`.
 3. Update `scripts/validate.mjs`: it currently requires a null embed URL and rejects `<video>` and `<iframe>` markup on every route. Adapt those checks to permit the approved player on the film page while preserving the restrictions elsewhere.
 4. Run `pnpm build`, then inspect the film page with `pnpm preview` before publishing.
@@ -155,7 +162,7 @@ pnpm preview
 
 **Use `pnpm build` for production.** Running Vite's build command directly skips the repository's validation and static page generation.
 
-The build produces eight portfolio pages, a `/404/index.html` page and a root `404.html`, alongside the bundled JavaScript, CSS and public assets:
+The build produces thirteen website pages, a `/404/index.html` page and a root `404.html`, alongside the bundled JavaScript, CSS and public assets:
 
 ```text
 dist/
@@ -168,6 +175,11 @@ dist/
 ├── creative-direction/index.html
 ├── about/index.html
 ├── contact/index.html
+├── privacy/index.html
+├── legal/index.html
+├── cookies/index.html
+├── accessibility/index.html
+├── terms/index.html
 ├── 404/index.html
 ├── 404.html
 ├── assets/
@@ -184,6 +196,8 @@ Deploy `dist/` to a static host with these settings:
 | URL base | Domain root (`/`) |
 
 Configure the host to serve each route's directory index and use `404.html` for unknown paths with an HTTP 404 status. Directly opening or refreshing `/design/hellion/` should serve that page's generated HTML.
+
+Vercel deploys the GitHub repository using `vercel.json`, which sets the build command, output directory and response headers. The Content Security Policy permits local assets and blocks external scripts, connections and embedded players. If an optional external service is introduced, review its privacy requirements before changing that policy. Before publishing final legal notices, complete `src/legal.js` and run `pnpm check:publication`; see [legal publication notes](docs/legal-publication.md).
 
 Asset and navigation URLs are root-relative, so deployment beneath a subdirectory requires changes to URL handling. Once a production domain is chosen, add per-page canonical URLs, `og:url` and an absolute `og:image` through `index.html` and `scripts/build.mjs`. Titles and descriptions are already generated per route.
 

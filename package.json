@@ -7,7 +7,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/validate.mjs && node scripts/build.mjs",
     "preview": "vite preview --host 127.0.0.1",
-    "check": "node scripts/validate.mjs"
+    "check": "node scripts/validate.mjs",
+    "check:publication": "node scripts/validate-publication.mjs"
   },
   "devDependencies": { "vite": "^7.1.0" }
 }
