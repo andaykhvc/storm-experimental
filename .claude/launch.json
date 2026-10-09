@@ -4,8 +4,24 @@
     {
       "name": "storm-dev",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["-y", "pnpm@10", "dev"],
+      "runtimeArgs": [
+        "-y",
+        "pnpm@10",
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "storm-3d",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "-y",
+        "pnpm@10",
+        "--dir",
+        "storm-3d",
+        "dev"
+      ],
+      "port": 5180
     }
   ]
 }
