@@ -87,7 +87,7 @@ function archive(ids, heading, featuredIds = []) {
   const remaining = ids.filter((id) => !featuredIds.includes(id));
   const portraits = remaining.filter((id) => assets.get(id).width <= assets.get(id).height);
   const landscapes = remaining.filter((id) => assets.get(id).width > assets.get(id).height);
-  return `<details class="archive-details"><summary><span>${heading}</span><span class="archive-count">${ids.length} photographs</span><span class="archive-toggle" aria-hidden="true"></span></summary><div class="archive-body">${portraits.length ? gallery(portraits, 'archive-grid') : ''}${landscapes.length ? gallery(landscapes, 'landscape-grid') : ''}</div></details>`;
+  return `<details class="archive-details"><summary><span>${heading}</span><span class="archive-count">${ids.length} ${ids.length === 1 ? 'photograph' : 'photographs'}</span><span class="archive-toggle" aria-hidden="true"></span></summary><div class="archive-body">${portraits.length ? gallery(portraits, 'archive-grid') : ''}${landscapes.length ? gallery(landscapes, 'landscape-grid') : ''}</div></details>`;
 }
 
 function hellion() {

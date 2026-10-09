@@ -345,9 +345,20 @@ function navigate(href, { historyMode = 'push', focus = true } = {}) {
   else update();
 }
 
-if (app.querySelector('main')?.dataset.route !== normalizePath(location.pathname)) app.innerHTML = renderPage(location.pathname);
-setMetadata(location.pathname);
-bindPage();
+function start() {
+  if (app.querySelector('main')?.dataset.route !== normalizePath(location.pathname)) app.innerHTML = renderPage(location.pathname);
+  setMetadata(location.pathname);
+  bindPage();
+}
+// Dev-only: a Demo data / Worst case switch for stress-testing layouts. Stripped from production builds.
+if (import.meta.env.DEV) {
+  import('./dev/worst-case.js').then(({ currentState, applyWorstCase, mountDataToggle }) => {
+    const state = currentState();
+    if (state === 'worst') applyWorstCase();
+    mountDataToggle(state);
+    start();
+  });
+} else start();
 // iOS Safari only applies :active press states once a touch listener exists on the page.
 document.addEventListener('touchstart', () => {}, { passive: true });
 window.addEventListener('popstate', () => navigate(location.href, { historyMode: 'none' }));
