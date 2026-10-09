@@ -78,7 +78,8 @@ function bindPage() {
     img.addEventListener('error', done, { once: true, signal });
   }
 
-  function setMenu(open, { focus = false } = {}) {
+  function setMenu(open, { focus = false, instant = false } = {}) {
+    nav.classList.toggle('is-instant', instant || !motion());
     menuButton.setAttribute('aria-expanded', String(open));
     menuButton.textContent = open ? 'Close' : 'Menu';
     nav.classList.toggle('is-open', open);
@@ -137,7 +138,7 @@ function bindPage() {
     if (animate) {
       panel.querySelectorAll('figure').forEach((figure, i) => figure.animate(
         [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
-        { duration: 320, delay: i * 40, easing: easeOut, fill: 'backwards' },
+        { duration: 240, delay: i * 30, easing: easeOut, fill: 'backwards' },
       ));
     }
   }
@@ -169,9 +170,8 @@ function bindPage() {
     }
   }
 
-  function swapToFull(src) {
-    // Skip the crossfade while the photograph is still moving; the layer would not follow it.
-    if (!motion() || drag || viewerImage.getAnimations().length) { viewerImage.src = src; return; }
+  // A fixed copy of the current photograph, laid over its resting position.
+  function photoLayer() {
     const rect = viewerImage.getBoundingClientRect();
     const layer = viewerImage.cloneNode();
     layer.removeAttribute('data-viewer-image');
@@ -179,36 +179,75 @@ function bindPage() {
     layer.alt = '';
     Object.assign(layer.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, transform: '' });
     dialog.append(layer);
-    viewerImage.src = src;
-    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease' }).finished.then(() => layer.remove(), () => layer.remove());
+    return { layer, rect, play: (keyframes, options) => layer.animate(keyframes, options).finished.then(() => layer.remove(), () => layer.remove()) };
   }
 
-  function openViewer(photo) {
+  function swapToFull(src) {
+    // Skip the crossfade while the photograph is still moving; the layer would not follow it.
+    if (!motion() || drag || viewerImage.getAnimations().length) { viewerImage.src = src; return; }
+    const { play } = photoLayer();
+    viewerImage.src = src;
+    play([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease' });
+  }
+
+  // After a swipe, the outgoing photograph keeps travelling the way it was thrown.
+  function carryAway(dx) {
+    // Measure the resting position without the snap-back transition running.
+    viewerImage.classList.add('is-dragging');
+    viewerImage.style.transform = '';
+    const { rect, play } = photoLayer();
+    viewerImage.classList.remove('is-dragging');
+    play(
+      [{ transform: `translateX(${dx}px)`, opacity: 1 }, { transform: `translateX(${Math.sign(dx) * rect.width * 0.6}px)`, opacity: 0 }],
+      { duration: 240, easing: easeOut },
+    );
+  }
+
+  // A visible thumbnail of the current photograph, if the page still shows one.
+  function visibleThumbnail(id) {
+    return [...app.querySelectorAll(`main [data-viewer="${id}"] img`)].find((img) => {
+      const rect = img.getBoundingClientRect();
+      return rect.width && rect.bottom > 0 && rect.top < innerHeight;
+    });
+  }
+
+  // Translate and scale that place the viewer photograph exactly over a thumbnail.
+  function thumbnailTransform(thumbnail, id) {
+    const from = thumbnail.getBoundingClientRect();
+    const to = containedRect(viewerImage, assets.get(id));
+    if (!from.width || !to.width) return null;
+    const x = from.left + from.width / 2 - (to.left + to.width / 2);
+    const y = from.top + from.height / 2 - (to.top + to.height / 2);
+    return `translate(${x}px, ${y}px) scale(${from.width / to.width})`;
+  }
+
+  function openViewer(photo, { keyboard = false } = {}) {
     const id = photo.dataset.viewer;
     const scope = photo.closest('[data-gallery]');
     const thumbnail = photo.querySelector('img');
     viewerIds = scope ? scope.dataset.gallery.split(',') : [id];
     viewerIndex = viewerIds.indexOf(id);
     viewerTrigger = photo;
+    viewerImage.getAnimations().forEach((animation) => animation.cancel());
     viewerImage.style.transform = '';
+    dialog.classList.toggle('is-instant', keyboard);
     showViewerImage(thumbnail?.currentSrc);
     dialog.showModal();
     document.body.classList.add('viewer-open');
     dialog.querySelector('[data-viewer-close]').focus();
-    if (!motion() || !thumbnail) return;
+    if (keyboard || !motion() || !thumbnail) return;
     // Grow the photograph out of the thumbnail that was opened.
-    const from = thumbnail.getBoundingClientRect();
-    const to = containedRect(viewerImage, assets.get(id));
-    if (!from.width || !to.width) return;
-    const x = from.left + from.width / 2 - (to.left + to.width / 2);
-    const y = from.top + from.height / 2 - (to.top + to.height / 2);
-    viewerImage.animate(
-      [{ transform: `translate(${x}px, ${y}px) scale(${from.width / to.width})` }, { transform: 'none' }],
-      { duration: 480, easing: easeDrawer },
-    );
+    const start = thumbnailTransform(thumbnail, id);
+    if (start) viewerImage.animate([{ transform: start }, { transform: 'none' }], { duration: 400, easing: easeDrawer });
   }
 
-  function closeViewer() {
+  // Keyboard closes are instant. Pointer closes shrink back into the thumbnail when it is on screen.
+  function closeViewer({ instant = false, toThumbnail = true } = {}) {
+    dialog.classList.toggle('is-instant', instant);
+    const id = viewerIds[viewerIndex];
+    const thumbnail = !instant && toThumbnail && motion() && visibleThumbnail(id);
+    const end = thumbnail && thumbnailTransform(thumbnail, id);
+    if (end) viewerImage.animate([{ transform: 'none' }, { transform: end }], { duration: 200, easing: easeOut, fill: 'forwards' });
     dialog.close();
   }
 
@@ -225,10 +264,10 @@ function bindPage() {
   listen(app, 'click', (event) => {
     const element = event.target instanceof Element ? event.target : null;
     if (!element) return;
-    if (element.closest('.menu-button')) return setMenu(menuButton.getAttribute('aria-expanded') !== 'true');
+    if (element.closest('.menu-button')) return setMenu(menuButton.getAttribute('aria-expanded') !== 'true', { instant: event.detail === 0 });
     const photo = element.closest('[data-viewer]');
-    if (photo) return openViewer(photo);
-    if (element.closest('[data-viewer-close]')) return closeViewer();
+    if (photo) return openViewer(photo, { keyboard: event.detail === 0 });
+    if (element.closest('[data-viewer-close]')) return closeViewer({ instant: event.detail === 0 });
     const viewerStep = element.closest('[data-viewer-step]');
     if (viewerStep) return stepViewer(Number(viewerStep.dataset.viewerStep), { animate: event.detail > 0 });
     const lookTab = element.closest('[data-look]');
@@ -256,7 +295,7 @@ function bindPage() {
       if (event.key === 'ArrowLeft') { event.preventDefault(); stepViewer(-1); }
       return;
     }
-    if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') setMenu(false, { focus: true });
+    if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') setMenu(false, { focus: true, instant: true });
     const tab = event.target.closest?.('[data-look]');
     if (!tab) return;
     const index = Number(tab.dataset.look);
@@ -266,13 +305,18 @@ function bindPage() {
     }
   });
 
+  listen(dialog, 'cancel', () => dialog.classList.add('is-instant'));
   listen(dialog, 'close', () => {
     document.body.classList.remove('viewer-open');
     drag = null;
     viewerImage.classList.remove('is-dragging');
     dialog.querySelectorAll('.viewer-swap').forEach((layer) => layer.remove());
     // Let a dragged photograph finish leaving before it returns to the centre.
-    setTimeout(() => { if (!dialog.open) viewerImage.style.transform = ''; }, 200);
+    setTimeout(() => {
+      if (dialog.open) return;
+      viewerImage.getAnimations().forEach((animation) => animation.cancel());
+      viewerImage.style.transform = '';
+    }, 220);
     if (viewerTrigger?.isConnected) viewerTrigger.focus({ preventScroll: true });
   });
   listen(dialog, 'click', (event) => { if (event.target === dialog) closeViewer(); });
@@ -281,7 +325,7 @@ function bindPage() {
   listen(viewerImage, 'pointerdown', (event) => {
     if (drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
     drag = { id: event.pointerId, x: event.clientX, y: event.clientY, time: performance.now(), axis: null, dx: 0, dy: 0 };
-    viewerImage.setPointerCapture(event.pointerId);
+    try { viewerImage.setPointerCapture(event.pointerId); } catch {}
   });
   listen(viewerImage, 'pointermove', (event) => {
     if (!drag || event.pointerId !== drag.id) return;
@@ -305,12 +349,13 @@ function bindPage() {
     const elapsed = Math.max(performance.now() - time, 1);
     const flick = (distance) => Math.abs(distance) > 20 && Math.abs(distance) / elapsed > 0.11;
     if (axis === 'x' && viewerIds.length > 1 && (Math.abs(dx) > 80 || flick(dx))) {
+      if (motion()) carryAway(dx);
       viewerImage.style.transform = '';
       return stepViewer(dx < 0 ? 1 : -1, { animate: true });
     }
     if (axis === 'y' && dy > 0 && (dy > 120 || flick(dy))) {
       viewerImage.style.transform = `translateY(${dy + 80}px) scale(0.88)`;
-      return closeViewer();
+      return closeViewer({ toThumbnail: false });
     }
     viewerImage.style.transform = '';
   }
