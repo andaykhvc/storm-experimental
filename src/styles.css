@@ -21,7 +21,7 @@ main:focus{outline:none}
 .section-pad{padding-right:var(--gutter);padding-left:var(--gutter)}
 .skip-link{position:fixed;top:calc(12px + var(--safe-t));left:calc(12px + var(--safe-l));background:var(--white);color:var(--black);padding:12px;z-index:20;transform:translateY(-160%)}
 .skip-link:focus{transform:translateY(0)}
-.site-header{height:calc(68px + var(--safe-t));display:flex;align-items:center;justify-content:space-between;padding:var(--safe-t) var(--gutter) 0;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;background:var(--black);transition:transform 320ms var(--ease-drawer);view-transition-name:site-header}
+.site-header{height:calc(68px + var(--safe-t));display:flex;align-items:center;justify-content:space-between;padding:var(--safe-t) var(--gutter) 0;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10;background:var(--black);transition:transform 220ms var(--ease-out);view-transition-name:site-header}
 .site-header.is-hidden{transform:translateY(-100%)}
 .site-header .wordmark{font-size:1.6875rem;white-space:nowrap}
 .site-header nav{display:flex;gap:clamp(18px,2.5vw,48px);align-items:center;height:100%}
@@ -179,6 +179,7 @@ summary::-webkit-details-marker{display:none}
 .image-viewer::backdrop{background:var(--black);opacity:0;transition:opacity 160ms ease,overlay 160ms allow-discrete,display 160ms allow-discrete}
 .image-viewer[open]::backdrop{opacity:1;transition-duration:240ms}
 @starting-style{.image-viewer[open]::backdrop{opacity:0}}
+.image-viewer.is-instant,.image-viewer.is-instant::backdrop,.image-viewer.is-instant .viewer-stage>img{transition:none}
 .viewer-toolbar{display:flex;justify-content:space-between;align-items:center;padding:var(--safe-t) max(var(--viewer-x),var(--safe-r)) 0 max(var(--viewer-x),var(--safe-l));gap:24px;font-size:0.75rem;letter-spacing:.015em;height:calc(var(--viewer-top) + var(--safe-t))}
 .viewer-toolbar>span{max-width:70%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
 .viewer-toolbar button{padding:10px 0;font-size:0.75rem;letter-spacing:.015em;white-space:nowrap}
@@ -192,7 +193,7 @@ summary::-webkit-details-marker{display:none}
 .viewer-bottom>span:first-child{font-variant-numeric:tabular-nums;color:var(--white)}
 .viewer-steps{display:flex;gap:24px}
 .viewer-steps button:disabled{opacity:.3}
-.js-motion .reveal{opacity:0;transform:translateY(16px);transition:opacity 500ms ease,transform 700ms var(--ease-out)}
+.js-motion .reveal{opacity:0;transform:translateY(12px);transition:opacity 400ms ease,transform 500ms var(--ease-out)}
 .js-motion main img{transition:opacity 450ms ease}
 .js-motion main img.is-loading{opacity:0}
 .js-motion .reveal.is-visible{opacity:1;transform:none}
@@ -200,7 +201,7 @@ summary::-webkit-details-marker{display:none}
 @keyframes fade-in{from{opacity:0}to{opacity:1}}
 ::view-transition-old(root){animation:150ms ease both fade-out}
 ::view-transition-new(root){animation:260ms ease 60ms both fade-in}
-::view-transition-group(site-header){animation-duration:320ms;animation-timing-function:var(--ease-drawer)}
+::view-transition-group(site-header){animation-duration:220ms;animation-timing-function:var(--ease-out)}
 @keyframes fade-out{to{opacity:0}}
 .site-header--home{justify-content:flex-end}
 .hero-info>a{padding:10px 0;border-bottom:1px solid var(--line)}
@@ -228,7 +229,8 @@ summary::-webkit-details-marker{display:none}
   .site-header nav{display:flex;visibility:hidden;clip-path:inset(0 0 100% 0);transition:clip-path 220ms var(--ease-out),visibility 0s 220ms;position:absolute;top:calc(100% - 1px);left:0;right:0;height:auto;background:var(--black);padding:25px var(--gutter) 35px;border-bottom:1px solid var(--line);flex-direction:column;align-items:stretch;gap:0}
   .site-header nav.is-open{visibility:visible;clip-path:inset(0 0 0 0);transition:clip-path 420ms var(--ease-drawer),visibility 0s}
   .site-header nav a{font-size:1.5rem;letter-spacing:-.03em;padding:14px 0;line-height:1.2;opacity:0;transform:translateY(-8px);transition:opacity 150ms ease,transform 150ms var(--ease-out)}
-  .site-header nav.is-open a{opacity:1;transform:none;transition:opacity 300ms ease,transform 400ms var(--ease-out);transition-delay:calc(var(--i) * 40ms + 60ms)}
+  .site-header nav.is-open a{opacity:1;transform:none;transition:opacity 200ms ease,transform 250ms var(--ease-out);transition-delay:calc(var(--i) * 30ms + 40ms)}
+  .site-header nav.is-instant,.site-header nav.is-instant a{transition:none}
   .site-header nav a:after{width:40px;right:auto}
   .hero-heading{padding:19px max(10px,var(--safe-r)) 11px max(10px,var(--safe-l))}
   .hero-heading h1{font-size:14.7vw;line-height:1.15}
