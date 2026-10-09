@@ -1,11 +1,13 @@
 import './styles.css';
 import { assets, looks } from './content.js';
 import { renderPage, renderLook, normalizePath, pageMeta, description } from './templates.js';
+import { createSpring, project, rubberband } from './spring.js';
 
 const app = document.querySelector('#app');
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const easeOut = 'cubic-bezier(0.23, 1, 0.32, 1)';
-const easeDrawer = 'cubic-bezier(0.32, 0.72, 0, 1)';
+// Space between neighbouring photographs while they slide.
+const PHOTO_GAP = 24;
 let dispose = () => {};
 let firstBind = true;
 
@@ -170,37 +172,80 @@ function bindPage() {
     }
   }
 
-  // A fixed copy of the current photograph, laid over its resting position.
+  // The viewer photograph's pose: position and scale, each on its own spring so motion is interruptible
+  // and picks up from wherever it is on screen. A finger drives x/y directly; springs take over on release.
+  const pose = { x: createSpring(0), y: createSpring(0), s: createSpring(1, 0.001) };
+  let poseFrame = 0;
+  let lastTick = 0;
+  let outgoing = null; // { layer, offset }: the previous photograph sliding away beside the current one
+  const moving = () => Boolean(poseFrame || drag);
+
+  function renderPose() {
+    const x = pose.x.value;
+    const y = pose.y.value;
+    // Pulling down shrinks the photograph slightly, a hint that letting go will close it.
+    const scale = pose.s.value * (1 - Math.min(Math.max(y, 0) / 1500, 0.12));
+    viewerImage.style.transform = x || y || scale !== 1 ? `translate(${x}px, ${y}px) scale(${scale})` : '';
+    if (outgoing) outgoing.layer.style.transform = `translateX(${x - outgoing.offset}px)`;
+  }
+
+  function runPose(onSettle) {
+    if (poseFrame) cancelAnimationFrame(poseFrame);
+    lastTick = performance.now();
+    const tick = (now) => {
+      const seconds = Math.min((now - lastTick) / 1000, 1 / 30);
+      lastTick = now;
+      pose.x.step(seconds);
+      pose.y.step(seconds);
+      pose.s.step(seconds);
+      renderPose();
+      if (drag || !(pose.x.settled && pose.y.settled && pose.s.settled)) {
+        poseFrame = requestAnimationFrame(tick);
+        return;
+      }
+      poseFrame = 0;
+      dropOutgoing();
+      onSettle?.();
+    };
+    poseFrame = requestAnimationFrame(tick);
+  }
+
+  function dropOutgoing() {
+    outgoing?.layer.remove();
+    outgoing = null;
+  }
+
+  function resetPose() {
+    cancelAnimationFrame(poseFrame);
+    poseFrame = 0;
+    dropOutgoing();
+    pose.x.set(0);
+    pose.y.set(0);
+    pose.s.set(1);
+    renderPose();
+  }
+
+  // A fixed copy of the current photograph at its resting position (ignoring any transform in flight).
   function photoLayer() {
+    const transform = viewerImage.style.transform;
+    viewerImage.style.transform = '';
     const rect = viewerImage.getBoundingClientRect();
+    viewerImage.style.transform = transform;
     const layer = viewerImage.cloneNode();
     layer.removeAttribute('data-viewer-image');
     layer.className = 'viewer-swap';
     layer.alt = '';
     Object.assign(layer.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, transform: '' });
     dialog.append(layer);
-    return { layer, rect, play: (keyframes, options) => layer.animate(keyframes, options).finished.then(() => layer.remove(), () => layer.remove()) };
+    return layer;
   }
 
   function swapToFull(src) {
-    // Skip the crossfade while the photograph is still moving; the layer would not follow it.
-    if (!motion() || drag || viewerImage.getAnimations().length) { viewerImage.src = src; return; }
-    const { play } = photoLayer();
+    // Skip the crossfade while the photograph is moving; the layer would not follow it.
+    if (!motion() || moving()) { viewerImage.src = src; return; }
+    const layer = photoLayer();
     viewerImage.src = src;
-    play([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease' });
-  }
-
-  // After a swipe, the outgoing photograph keeps travelling the way it was thrown.
-  function carryAway(dx) {
-    // Measure the resting position without the snap-back transition running.
-    viewerImage.classList.add('is-dragging');
-    viewerImage.style.transform = '';
-    const { rect, play } = photoLayer();
-    viewerImage.classList.remove('is-dragging');
-    play(
-      [{ transform: `translateX(${dx}px)`, opacity: 1 }, { transform: `translateX(${Math.sign(dx) * rect.width * 0.6}px)`, opacity: 0 }],
-      { duration: 240, easing: easeOut },
-    );
+    layer.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220, easing: 'ease' }).finished.then(() => layer.remove(), () => layer.remove());
   }
 
   // A visible thumbnail of the current photograph, if the page still shows one.
@@ -211,14 +256,12 @@ function bindPage() {
     });
   }
 
-  // Translate and scale that place the viewer photograph exactly over a thumbnail.
-  function thumbnailTransform(thumbnail, id) {
+  // The pose that places the viewer photograph exactly over a thumbnail.
+  function thumbnailPose(thumbnail, id) {
     const from = thumbnail.getBoundingClientRect();
     const to = containedRect(viewerImage, assets.get(id));
     if (!from.width || !to.width) return null;
-    const x = from.left + from.width / 2 - (to.left + to.width / 2);
-    const y = from.top + from.height / 2 - (to.top + to.height / 2);
-    return `translate(${x}px, ${y}px) scale(${from.width / to.width})`;
+    return { x: from.left + from.width / 2 - (to.left + to.width / 2), y: from.top + from.height / 2 - (to.top + to.height / 2), s: from.width / to.width };
   }
 
   function openViewer(photo, { keyboard = false } = {}) {
@@ -228,17 +271,24 @@ function bindPage() {
     viewerIds = scope ? scope.dataset.gallery.split(',') : [id];
     viewerIndex = viewerIds.indexOf(id);
     viewerTrigger = photo;
-    viewerImage.getAnimations().forEach((animation) => animation.cancel());
-    viewerImage.style.transform = '';
+    resetPose();
     dialog.classList.toggle('is-instant', keyboard);
     showViewerImage(thumbnail?.currentSrc);
     dialog.showModal();
     document.body.classList.add('viewer-open');
     dialog.querySelector('[data-viewer-close]').focus();
     if (keyboard || !motion() || !thumbnail) return;
-    // Grow the photograph out of the thumbnail that was opened.
-    const start = thumbnailTransform(thumbnail, id);
-    if (start) viewerImage.animate([{ transform: start }, { transform: 'none' }], { duration: 400, easing: easeDrawer });
+    // Grow the photograph out of the thumbnail that was opened. It can be grabbed mid-way.
+    const start = thumbnailPose(thumbnail, id);
+    if (!start) return;
+    pose.x.set(start.x);
+    pose.y.set(start.y);
+    pose.s.set(start.s);
+    pose.x.to(0, { response: 0.4 });
+    pose.y.to(0, { response: 0.4 });
+    pose.s.to(1, { response: 0.4 });
+    renderPose();
+    runPose();
   }
 
   // Keyboard closes are instant. Pointer closes shrink back into the thumbnail when it is on screen.
@@ -246,19 +296,40 @@ function bindPage() {
     dialog.classList.toggle('is-instant', instant);
     const id = viewerIds[viewerIndex];
     const thumbnail = !instant && toThumbnail && motion() && visibleThumbnail(id);
-    const end = thumbnail && thumbnailTransform(thumbnail, id);
-    if (end) viewerImage.animate([{ transform: 'none' }, { transform: end }], { duration: 200, easing: easeOut, fill: 'forwards' });
+    const end = thumbnail && thumbnailPose(thumbnail, id);
+    if (end) {
+      pose.x.to(end.x, { response: 0.25 });
+      pose.y.to(end.y, { response: 0.25 });
+      pose.s.to(end.s, { response: 0.25 });
+      runPose();
+    }
     dialog.close();
   }
 
-  function stepViewer(step, { animate = false } = {}) {
+  // Slide to a neighbour. The incoming photograph starts one photo-width away and both travel together,
+  // continuing at the speed the finger left off.
+  function slideTo(step, velocity = 0) {
+    const span = viewerImage.offsetWidth + PHOTO_GAP;
+    const x = pose.x.value;
+    dropOutgoing();
+    outgoing = { layer: photoLayer(), offset: step * span };
     viewerIndex = (viewerIndex + step + viewerIds.length) % viewerIds.length;
     showViewerImage();
-    if (!animate) return;
-    viewerImage.animate(
-      motion() ? [{ opacity: 0, transform: `translateX(${step * 36}px)` }, { opacity: 1, transform: 'none' }] : [{ opacity: 0 }, { opacity: 1 }],
-      { duration: motion() ? 280 : 160, easing: easeOut },
-    );
+    pose.x.set(x + step * span, velocity);
+    pose.x.to(0, { response: 0.35 });
+    pose.y.to(0, { response: 0.35 });
+    pose.s.to(1, { response: 0.35 });
+    renderPose();
+    runPose();
+  }
+
+  // Keyboard steps are instant; pointer steps slide (or fade, with reduced motion).
+  function stepViewer(step, { animate = false } = {}) {
+    if (animate && motion()) return slideTo(step);
+    resetPose();
+    viewerIndex = (viewerIndex + step + viewerIds.length) % viewerIds.length;
+    showViewerImage();
+    if (animate) viewerImage.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 160, easing: easeOut });
   }
 
   listen(app, 'click', (event) => {
@@ -309,55 +380,79 @@ function bindPage() {
   listen(dialog, 'close', () => {
     document.body.classList.remove('viewer-open');
     drag = null;
-    viewerImage.classList.remove('is-dragging');
     dialog.querySelectorAll('.viewer-swap').forEach((layer) => layer.remove());
-    // Let a dragged photograph finish leaving before it returns to the centre.
-    setTimeout(() => {
-      if (dialog.open) return;
-      viewerImage.getAnimations().forEach((animation) => animation.cancel());
-      viewerImage.style.transform = '';
-    }, 220);
+    // Let a closing photograph finish its path before it returns to the centre.
+    setTimeout(() => { if (!dialog.open) resetPose(); }, 220);
     if (viewerTrigger?.isConnected) viewerTrigger.focus({ preventScroll: true });
   });
   listen(dialog, 'click', (event) => { if (event.target === dialog) closeViewer(); });
 
-  // Drag sideways to browse, drag down to close. A quick flick counts as much as a long drag.
+  // Drag sideways to browse, drag down to close. The photograph stays under the finger from where it was
+  // grabbed, even mid-animation; on release, momentum decides where it lands and the springs inherit its speed.
   listen(viewerImage, 'pointerdown', (event) => {
     if (drag || (event.pointerType === 'mouse' && event.button !== 0)) return;
-    drag = { id: event.pointerId, x: event.clientX, y: event.clientY, time: performance.now(), axis: null, dx: 0, dy: 0 };
+    const x = pose.x.value;
+    const y = pose.y.value;
+    pose.x.set(x);
+    pose.y.set(y);
+    drag = { id: event.pointerId, downX: event.clientX, downY: event.clientY, originX: x, originY: y, axis: x ? 'x' : y ? 'y' : null, samples: [{ t: event.timeStamp, x: event.clientX, y: event.clientY }] };
     try { viewerImage.setPointerCapture(event.pointerId); } catch {}
+    // Keep the loop alive so an unfinished scale (from opening) still settles while the finger holds the photo.
+    runPose();
   });
   listen(viewerImage, 'pointermove', (event) => {
     if (!drag || event.pointerId !== drag.id) return;
-    drag.dx = event.clientX - drag.x;
-    drag.dy = event.clientY - drag.y;
-    if (!drag.axis && Math.hypot(drag.dx, drag.dy) > 8) {
-      drag.axis = Math.abs(drag.dx) > Math.abs(drag.dy) ? 'x' : 'y';
-      viewerImage.classList.add('is-dragging');
+    const dx = event.clientX - drag.downX;
+    const dy = event.clientY - drag.downY;
+    drag.samples.push({ t: event.timeStamp, x: event.clientX, y: event.clientY });
+    while (drag.samples.length > 2 && event.timeStamp - drag.samples[0].t > 100) drag.samples.shift();
+    // Commit to an axis only after 10px, so a slightly diagonal drag doesn't pick the wrong one.
+    if (!drag.axis && Math.hypot(dx, dy) > 10) drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+    if (drag.axis === 'x') {
+      const x = drag.originX + dx;
+      pose.x.set(viewerIds.length > 1 ? x : rubberband(x, viewerImage.offsetWidth));
     }
-    if (drag.axis === 'x') viewerImage.style.transform = `translateX(${viewerIds.length > 1 ? drag.dx : drag.dx * 0.2}px)`;
     if (drag.axis === 'y') {
-      const dy = drag.dy > 0 ? drag.dy : drag.dy * 0.2;
-      viewerImage.style.transform = `translateY(${dy}px) scale(${1 - Math.min(Math.max(dy, 0) / 1500, 0.12)})`;
+      const y = drag.originY + dy;
+      pose.y.set(y > 0 ? y : rubberband(y, viewerImage.offsetHeight));
     }
+    renderPose();
   });
   function endDrag(event) {
     if (!drag || event.pointerId !== drag.id) return;
-    const { dx, dy, axis, time } = drag;
+    const { axis, samples } = drag;
     drag = null;
-    viewerImage.classList.remove('is-dragging');
-    const elapsed = Math.max(performance.now() - time, 1);
-    const flick = (distance) => Math.abs(distance) > 20 && Math.abs(distance) / elapsed > 0.11;
-    if (axis === 'x' && viewerIds.length > 1 && (Math.abs(dx) > 80 || flick(dx))) {
-      if (motion()) carryAway(dx);
-      viewerImage.style.transform = '';
-      return stepViewer(dx < 0 ? 1 : -1, { animate: true });
+    const first = samples[0];
+    const last = samples.at(-1);
+    const seconds = Math.max((last.t - first.t) / 1000, 0.001);
+    const vx = (last.x - first.x) / seconds;
+    const vy = (last.y - first.y) / seconds;
+    // A flick in the opposite direction of the drag means "never mind", whatever the distance.
+    const agrees = (offset, velocity) => Math.abs(velocity) < 100 || Math.sign(velocity) === Math.sign(offset);
+    if (axis === 'x' && viewerIds.length > 1 && motion()) {
+      const x = pose.x.value;
+      if (Math.abs(x + project(vx)) > viewerImage.offsetWidth * 0.35 && agrees(x, vx)) return slideTo(x < 0 ? 1 : -1, vx);
     }
-    if (axis === 'y' && dy > 0 && (dy > 120 || flick(dy))) {
-      viewerImage.style.transform = `translateY(${dy + 80}px) scale(0.88)`;
-      return closeViewer({ toThumbnail: false });
+    if (axis === 'x' && viewerIds.length > 1 && !motion() && Math.abs(pose.x.value) > 80) {
+      const step = pose.x.value < 0 ? 1 : -1;
+      return stepViewer(step, { animate: true });
     }
-    viewerImage.style.transform = '';
+    if (axis === 'y') {
+      const y = pose.y.value;
+      if (y > 0 && y + project(vy) > viewerImage.offsetHeight * 0.3 && agrees(y, vy)) {
+        if (motion()) {
+          pose.y.to(innerHeight, { response: 0.35, velocity: vy });
+          runPose();
+        }
+        return closeViewer({ toThumbnail: false });
+      }
+    }
+    if (!motion()) return resetPose();
+    // Not far or fast enough: settle back. A released drag carries momentum, so a touch of overshoot is allowed.
+    pose.x.to(0, { dampingRatio: 0.85, response: 0.35, velocity: axis === 'x' ? vx : 0 });
+    pose.y.to(0, { dampingRatio: 0.85, response: 0.35, velocity: axis === 'y' ? vy : 0 });
+    pose.s.to(1, { response: 0.35 });
+    runPose();
   }
   listen(viewerImage, 'pointerup', endDrag);
   listen(viewerImage, 'pointercancel', endDrag);
@@ -367,6 +462,7 @@ function bindPage() {
     document.body.classList.remove('viewer-open');
     controller.abort();
     revealObserver?.disconnect();
+    cancelAnimationFrame(poseFrame);
     cancelAnimationFrame(headerFrame);
   };
 }
